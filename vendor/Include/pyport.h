@@ -754,62 +754,31 @@ extern int fdatasync(int);
   we support a HAVE_DECLSPEC_DLL macro to save duplication.
 */
 
-/*
-  All windows ports, except cygwin, are handled in PC/pyconfig.h.
-
-  BeOS and cygwin are the only other autoconf platform requiring special
-  linkage handling and both of these use __declspec().
-*/
-#if defined(__CYGWIN__) || defined(__BEOS__)
-#       define HAVE_DECLSPEC_DLL
-#endif
-
-/* only get special linkage if built as shared or platform is Cygwin */
-#if defined(Py_ENABLE_SHARED) || defined(__CYGWIN__)
-#       if defined(HAVE_DECLSPEC_DLL)
-#               ifdef Py_BUILD_CORE
-#                       define PyAPI_FUNC(RTYPE) __declspec(dllexport) RTYPE
-#                       define PyAPI_DATA(RTYPE) extern __declspec(dllexport) RTYPE
-        /* module init functions inside the core need no external linkage */
-        /* except for Cygwin to handle embedding (FIXME: BeOS too?) */
-#                       if defined(__CYGWIN__)
-#                               define PyMODINIT_FUNC __declspec(dllexport) void
-#                       else /* __CYGWIN__ */
-#                               define PyMODINIT_FUNC void
-#                       endif /* __CYGWIN__ */
-#               else /* Py_BUILD_CORE */
-        /* Building an extension module, or an embedded situation */
-        /* public Python functions and data are imported */
-        /* Under Cygwin, auto-import functions to prevent compilation */
-        /* failures similar to those described at the bottom of 4.1: */
-        /* http://docs.python.org/extending/windows.html#a-cookbook-approach */
-#                       if !defined(__CYGWIN__)
-#                               define PyAPI_FUNC(RTYPE) __declspec(dllimport) RTYPE
-#                       endif /* !__CYGWIN__ */
-#                       define PyAPI_DATA(RTYPE) extern __declspec(dllimport) RTYPE
-        /* module init functions outside the core must be exported */
-#                       if defined(__cplusplus)
-#                               define PyMODINIT_FUNC extern "C" __declspec(dllexport) void
-#                       else /* __cplusplus */
-#                               define PyMODINIT_FUNC __declspec(dllexport) void
-#                       endif /* __cplusplus */
-#               endif /* Py_BUILD_CORE */
-#       endif /* HAVE_DECLSPEC */
-#endif /* Py_ENABLE_SHARED */
-
-/* If no external linkage macros defined by now, create defaults */
-#ifndef PyAPI_FUNC
-#       define PyAPI_FUNC(RTYPE) RTYPE
-#endif
-#ifndef PyAPI_DATA
-#       define PyAPI_DATA(RTYPE) extern RTYPE
-#endif
-#ifndef PyMODINIT_FUNC
+#if defined(HAVE_DECLSPEC_DLL)
 #       if defined(__cplusplus)
-#               define PyMODINIT_FUNC extern "C" void
+#              define PyMODINIT_FUNC extern "C" void
 #       else /* __cplusplus */
 #               define PyMODINIT_FUNC void
 #       endif /* __cplusplus */
+#       if defined(Py_BUILD_CORE) && defined(Py_ENABLE_SHARED)
+#              define PyAPI_FUNC(RTYPE) __declspec(dllexport) RTYPE
+#              define PyAPI_DATA(RTYPE) extern __declspec(dllexport) RTYPE
+#        else
+#              define PyAPI_FUNC(RTYPE) RTYPE
+#              if defined(Py_ENABLE_SHARED)
+#                     define PyAPI_DATA(RTYPE) extern __declspec(dllimport) RTYPE
+#              else
+#                     define PyAPI_DATA(RTYPE) extern RTYPE
+#              endif
+#        endif
+#else
+#       define PyAPI_FUNC(RTYPE) __attribute__((visibility("default"))) RTYPE
+#       define PyAPI_DATA(RTYPE) extern __attribute__((visibility("default"))) RTYPE
+#       if defined(__cplusplus)
+#             define PyMODINIT_FUNC extern "C" __attribute__((visibility("default"))) void
+#       else
+#             define PyMODINIT_FUNC __attribute__((visibility("default"))) void
+#       endif
 #endif
 
 /* Deprecated DL_IMPORT and DL_EXPORT macros */
@@ -946,5 +915,25 @@ typedef struct fd_set {
 #ifndef Py_ULL
 #define Py_ULL(x) Py_LL(x##U)
 #endif
+
+#ifdef Py_BUILD_CORE
+/*
+ * Macros to protect CRT calls against instant termination when passed an
+ * invalid parameter (issue23524).
+ */
+#if defined _MSC_VER && _MSC_VER >= 1900
+
+extern _invalid_parameter_handler _Py_silent_invalid_parameter_handler;
+#define _Py_BEGIN_SUPPRESS_IPH { _invalid_parameter_handler _Py_old_handler = \
+    _set_thread_local_invalid_parameter_handler(_Py_silent_invalid_parameter_handler);
+#define _Py_END_SUPPRESS_IPH _set_thread_local_invalid_parameter_handler(_Py_old_handler); }
+
+#else
+
+#define _Py_BEGIN_SUPPRESS_IPH
+#define _Py_END_SUPPRESS_IPH
+
+#endif /* _MSC_VER >= 1900 */
+#endif /* Py_BUILD_CORE */
 
 #endif /* Py_PYPORT_H */

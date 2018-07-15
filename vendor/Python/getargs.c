@@ -18,7 +18,7 @@ int PyArg_ParseTupleAndKeywords(PyObject *, PyObject *,
 int PyArg_VaParseTupleAndKeywords(PyObject *, PyObject *,
                                 const char *, char **, va_list);
 
-#ifdef HAVE_DECLSPEC_DLL
+#ifdef Py_BUILD_CORE
 /* Export functions */
 PyAPI_FUNC(int) _PyArg_Parse_SizeT(PyObject *, char *, ...);
 PyAPI_FUNC(int) _PyArg_ParseTuple_SizeT(PyObject *, char *, ...);

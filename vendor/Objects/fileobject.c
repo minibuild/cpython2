@@ -717,8 +717,7 @@ _portable_fseek(FILE *fp, Py_off_t offset, int whence)
     switch (whence) {
     case SEEK_END:
 #ifdef MS_WINDOWS
-        fflush(fp);
-        if (_lseeki64(fileno(fp), 0, 2) == -1)
+        if (_fseeki64(fp, 0, 2) == -1)
             return -1;
 #else
         if (fseek(fp, 0, SEEK_END) != 0)
@@ -890,7 +889,9 @@ file_truncate(PyFileObject *f, PyObject *args)
         /* Truncate.  Note that this may grow the file! */
         FILE_BEGIN_ALLOW_THREADS(f)
         errno = 0;
+        _Py_BEGIN_SUPPRESS_IPH
         hFile = (HANDLE)_get_osfhandle(fileno(f->f_fp));
+        _Py_END_SUPPRESS_IPH
         ret = hFile == (HANDLE)-1;
         if (ret == 0) {
             ret = SetEndOfFile(hFile) == 0;

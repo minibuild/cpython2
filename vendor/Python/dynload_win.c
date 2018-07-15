@@ -12,15 +12,13 @@
 #include <windows.h>
 
 // "activation context" magic - see dl_nt.c...
+#if HAVE_SXS && defined(Py_ENABLE_SHARED)
 extern ULONG_PTR _Py_ActivateActCtx();
 void _Py_DeactivateActCtx(ULONG_PTR cookie);
+#endif
 
 const struct filedescr _PyImport_DynLoadFiletab[] = {
-#ifdef _DEBUG
-    {"_d.pyd", "rb", C_EXTENSION},
-#else
     {".pyd", "rb", C_EXTENSION},
-#endif
     {0, 0}
 };
 
@@ -28,6 +26,7 @@ const struct filedescr _PyImport_DynLoadFiletab[] = {
 /* Case insensitive string compare, to avoid any dependencies on particular
    C RTL implementations */
 
+#ifndef __MINGW32__
 static int strcasecmp (char *string1, char *string2)
 {
     int first, second;
@@ -41,7 +40,7 @@ static int strcasecmp (char *string1, char *string2)
 
     return (first - second);
 }
-
+#endif
 
 /* Function to return the name of the "python" DLL that the supplied module
    directly imports.  Looks through the list of imported modules and
@@ -137,11 +136,7 @@ static char *GetPythonImport (HINSTANCE hModule)
                 /* Ensure python prefix is followed only
                    by numbers to the end of the basename */
                 pch = import_name + 6;
-#ifdef _DEBUG
-                while (*pch && pch[0] != '_' && pch[1] != 'd' && pch[2] != '.') {
-#else
                 while (*pch && *pch != '.') {
-#endif
                     if (*pch >= '0' && *pch <= '9') {
                         pch++;
                     } else {
@@ -176,7 +171,9 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
         char pathbuf[260];
         LPTSTR dummy;
         unsigned int old_mode;
+#if HAVE_SXS && defined(Py_ENABLE_SHARED)
         ULONG_PTR cookie = 0;
+#endif
         /* We use LoadLibraryEx so Windows looks for dependent DLLs
             in directory of pathname first.  However, Windows95
             can sometimes not work correctly unless the absolute
@@ -190,11 +187,15 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
                             sizeof(pathbuf),
                             pathbuf,
                             &dummy)) {
+#if HAVE_SXS && defined(Py_ENABLE_SHARED)
             ULONG_PTR cookie = _Py_ActivateActCtx();
+#endif
             /* XXX This call doesn't exist in Windows CE */
             hDLL = LoadLibraryEx(pathname, NULL,
                                  LOAD_WITH_ALTERED_SEARCH_PATH);
+#if HAVE_SXS && defined(Py_ENABLE_SHARED)
             _Py_DeactivateActCtx(cookie);
+#endif
         }
 
         /* restore old error mode settings */
@@ -248,11 +249,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
         } else {
             char buffer[256];
 
-#ifdef _DEBUG
-            PyOS_snprintf(buffer, sizeof(buffer), "python%d%d_d.dll",
-#else
             PyOS_snprintf(buffer, sizeof(buffer), "python%d%d.dll",
-#endif
                           PY_MAJOR_VERSION,PY_MINOR_VERSION);
             import_python = GetPythonImport(hDLL);
 

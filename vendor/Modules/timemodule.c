@@ -91,6 +91,12 @@ static long main_thread;
 extern int riscos_sleep(double);
 #endif
 
+#if _MSC_VER >= 1900
+#define timezone _timezone
+#define daylight _daylight
+#define tzname _tzname
+#endif
+
 /* Forward declarations */
 static int floatsleep(double);
 static double floattime(void);

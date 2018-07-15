@@ -3745,7 +3745,7 @@ PySSL_nid2obj(PyObject *self, PyObject *args)
     return result;
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 
 static PyObject*
 certEncodingType(DWORD encodingType)
@@ -4000,7 +4000,7 @@ PySSL_enum_crls(PyObject *self, PyObject *args, PyObject *kwds)
     return result;
 }
 
-#endif /* _MSC_VER */
+#endif /* _WIN32 */
 
 /* List of functions exported by this module. */
 
@@ -4019,7 +4019,7 @@ static PyMethodDef PySSL_methods[] = {
 #endif
     {"get_default_verify_paths", (PyCFunction)PySSL_get_default_verify_paths,
      METH_NOARGS, PySSL_get_default_verify_paths_doc},
-#ifdef _MSC_VER
+#ifdef _WIN32
     {"enum_certificates", (PyCFunction)PySSL_enum_certificates,
      METH_VARARGS | METH_KEYWORDS, PySSL_enum_certificates_doc},
     {"enum_crls", (PyCFunction)PySSL_enum_crls,

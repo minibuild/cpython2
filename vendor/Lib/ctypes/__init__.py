@@ -447,7 +447,10 @@ cdll = LibraryLoader(CDLL)
 pydll = LibraryLoader(PyDLL)
 
 if _os.name in ("nt", "ce"):
-    pythonapi = PyDLL("python dll", None, _sys.dllhandle)
+    if hasattr(_sys, 'dllhandle'):
+        pythonapi = PyDLL("python dll", None, _sys.dllhandle)
+    else:
+        pythonapi = None
 elif _sys.platform == "cygwin":
     pythonapi = PyDLL("libpython%d.%d.dll" % _sys.version_info[:2])
 else:

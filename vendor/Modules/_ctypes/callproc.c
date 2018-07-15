@@ -64,6 +64,7 @@
 #include "structmember.h"
 
 #ifdef MS_WIN32
+#define INITGUID
 #include <windows.h>
 #include <tchar.h>
 #else
@@ -785,7 +786,7 @@ static int _call_function_pointer(int flags,
     ffi_cif cif;
     int cc;
 #ifdef MS_WIN32
-    int delta;
+    int delta = 0;
 #ifndef DONT_USE_SEH
     DWORD dwExceptionCode = 0;
     EXCEPTION_RECORD record;
@@ -836,7 +837,7 @@ static int _call_function_pointer(int flags,
 #ifndef DONT_USE_SEH
     __try {
 #endif
-        delta =
+        /* delta = */
 #endif
                 ffi_call(&cif, (void *)pProc, resmem, avalues);
 #ifdef MS_WIN32

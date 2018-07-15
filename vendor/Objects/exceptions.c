@@ -818,7 +818,7 @@ MiddlingExtendsException(PyExc_EnvironmentError, OSError,
  *    WindowsError extends OSError
  */
 #ifdef MS_WINDOWS
-#include "errmap.h"
+#include "../PC/errmap.h"
 
 static int
 WindowsError_clear(PyWindowsErrorObject *self)
