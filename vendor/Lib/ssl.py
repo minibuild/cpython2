@@ -92,6 +92,9 @@ import textwrap
 import re
 import sys
 import os
+import os.path
+import sysconfig
+import zipfile
 from collections import namedtuple
 from contextlib import closing
 
@@ -404,6 +407,30 @@ class SSLContext(_SSLContext):
             self.load_verify_locations(cadata=certs)
         return certs
 
+    def _load_bundled_certs(self):
+        capath = None
+        try:
+            capath = os.path.join(sysconfig.get_path('data'), 'ca-certificates')
+        except KeyError:
+            pass
+        if capath is not None and os.path.isdir(capath):
+            for crt in os.listdir(capath):
+                cert_file = os.path.join(capath, crt)
+                if os.path.isfile(cert_file):
+                    self.load_verify_locations(cafile=cert_file)
+        elif zipfile.is_zipfile(sys.executable):
+            certs_list = []
+            with zipfile.ZipFile(sys.executable) as z:
+                for zn in z.namelist():
+                    if 'ca-certificates/' in zn:
+                        zi = z.getinfo(zn)
+                        if zi.file_size > 0:
+                            fbytes = z.read(zn)
+                            certs_list.append(unicode(fbytes, encoding='ascii'))
+            certs = u''.join(certs_list)
+            if certs:
+                self.load_verify_locations(cadata=certs)
+
     def load_default_certs(self, purpose=Purpose.SERVER_AUTH):
         if not isinstance(purpose, _ASN1Object):
             raise TypeError(purpose)
@@ -456,9 +483,9 @@ def create_default_context(purpose=Purpose.SERVER_AUTH, cafile=None,
         context.load_verify_locations(cafile, capath, cadata)
     elif context.verify_mode != CERT_NONE:
         # no explicit cafile, capath or cadata but the verify mode is
-        # CERT_OPTIONAL or CERT_REQUIRED. Let's try to load default system
-        # root CA certificates for the given purpose. This may fail silently.
-        context.load_default_certs(purpose)
+        # CERT_OPTIONAL or CERT_REQUIRED.
+        # Let's try to load bundled root CA certificates.
+        context._load_bundled_certs()
     return context
 
 def _create_unverified_context(protocol=PROTOCOL_TLS, cert_reqs=None,
@@ -496,9 +523,9 @@ def _create_unverified_context(protocol=PROTOCOL_TLS, cert_reqs=None,
         context.load_verify_locations(cafile, capath, cadata)
     elif context.verify_mode != CERT_NONE:
         # no explicit cafile, capath or cadata but the verify mode is
-        # CERT_OPTIONAL or CERT_REQUIRED. Let's try to load default system
-        # root CA certificates for the given purpose. This may fail silently.
-        context.load_default_certs(purpose)
+        # CERT_OPTIONAL or CERT_REQUIRED.
+        # Let's try to load bundled root CA certificates.
+        context._load_bundled_certs()
 
     return context
 
