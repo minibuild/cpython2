@@ -1605,7 +1605,11 @@ static struct fielddesc formattable[] = {
     { 'B', B_set, B_get, &ffi_type_uchar},
     { 'c', c_set, c_get, &ffi_type_schar},
     { 'd', d_set, d_get, &ffi_type_double, d_set_sw, d_get_sw},
+#ifdef FFI_TYPE_LONGDOUBLE
     { 'g', g_set, g_get, &ffi_type_longdouble},
+#else
+    { 'g', d_set, d_get, &ffi_type_double, d_set_sw, d_get_sw},
+#endif
     { 'f', f_set, f_get, &ffi_type_float, f_set_sw, f_get_sw},
     { 'h', h_set, h_get, &ffi_type_sshort, h_set_sw, h_get_sw},
     { 'H', H_set, H_get, &ffi_type_ushort, H_set_sw, H_get_sw},
@@ -1752,12 +1756,14 @@ ffi_type ffi_type_sint64 = { 8, LONG_LONG_ALIGN, FFI_TYPE_SINT64 };
 ffi_type ffi_type_float = { sizeof(float), FLOAT_ALIGN, FFI_TYPE_FLOAT };
 ffi_type ffi_type_double = { sizeof(double), DOUBLE_ALIGN, FFI_TYPE_DOUBLE };
 
+#ifdef FFI_TYPE_LONGDOUBLE
 #ifdef ffi_type_longdouble
 #undef ffi_type_longdouble
 #endif
   /* This is already defined on OSX */
 ffi_type ffi_type_longdouble = { sizeof(long double), LONGDOUBLE_ALIGN,
                                  FFI_TYPE_LONGDOUBLE };
+#endif
 
 ffi_type ffi_type_pointer = { sizeof(void *), VOID_P_ALIGN, FFI_TYPE_POINTER };
 
