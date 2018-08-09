@@ -1,0 +1,34 @@
+#include <winver.h>
+#include "vendor/include/modsupport.h"
+#include "vendor/include/patchlevel.h"
+
+#define RC_VERSION  PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION, 0
+
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION     RC_VERSION
+  PRODUCTVERSION  RC_VERSION
+  FILEFLAGSMASK   0x3fL
+  FILEFLAGS       0
+  FILEOS          VOS__WINDOWS32
+  FILETYPE        VFT_DLL
+  FILESUBTYPE     0x0L
+
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904b0"
+    BEGIN
+      VALUE "CompanyName",      "Python Software Foundation" "\0"
+      VALUE "FileDescription",  "Python Core" "\0"
+      VALUE "FileVersion",      PY_VERSION "\0"
+      VALUE "LegalCopyright",   "Copyright \xa9 2001-2017 Python Software Foundation. Copyright \xa9 2000 BeOpen.com. Copyright \xa9 1995-2001 CNRI. Copyright \xa9 1991-1995 SMC." "\0"
+      VALUE "ProductName",      "Python" "\0"
+      VALUE "ProductVersion",   PY_VERSION "\0"
+    END
+  END
+
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0, 1200
+  END
+END
